@@ -7,12 +7,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack-dashboard -t 'React-Redux Boilerplate' -- webpack-dev-server --colors --no-info",
-    "build": "rm -rf ./build && NODE_ENV=\"production\" webpack",
+    "build": "NODE_ENV=\"production\" webpack",
     "lint-break-on-errors": "eslint ./source/js ./webpack.config.js -f table --ext .js --ext .jsx",
-    "lint": "eslint ./source/js ./webpack.config.js -f table --ext .js --ext .jsx || true",
     "preview": "rm -rf ./build && NODE_ENV=\"production\" webpack-dashboard -t 'Preview Mode - React-Redux Boilerplate' -- webpack-dev-server",
+    "lint": "eslint ./source/js ./webpack.config.js ./webpack.config.server.js -f table --ext .js --ext .jsx || true",
     "hook-add": "prepush install",
-    "hook-remove": "prepush remove"
+    "hook-remove": "prepush remove",
+    "clean": "rm -rf ./build",
+    "watch-server": "webpack --config webpack.config.server.js --colors",
+    "build-server": "NODE_ENV=\"production\" webpack --config webpack.config.server.js --colors",
+    "start-server": "nodemon ./build/server.js",
+    "dev-server": "concurrently --kill-others \"npm run watch-server\" \"npm run start-server\""
   },
   "devDependencies": {
     "autoprefixer": "^6.5.3",
@@ -28,6 +33,7 @@
     "babel-preset-react-hmre": "^1.1.1",
     "babel-preset-stage-0": "^6.16.0",
     "babel-runtime": "^6.6.1",
+    "concurrently": "^3.4.0",
     "css-loader": "0.14.5",
     "eslint": "^3.10.1",
     "eslint-config-airbnb": "^13.0.0",
@@ -52,6 +58,7 @@
   "dependencies": {
     "babel-polyfill": "^6.16.0",
     "es6-promise": "^3.1.2",
+    "express": "^4.14.0",
     "immutable": "^3.8.1",
     "isomorphic-fetch": "^2.2.1",
     "react": "^15.5.0",
@@ -59,7 +66,9 @@
     "react-redux": "^4.4.0",
     "react-router": "^3.0.0",
     "redux": "^3.3.1",
-    "redux-thunk": "^2.0.1"
+    "redux-thunk": "^2.0.1",
+    "transit-immutable-js": "^0.6.0",
+    "transit-js": "^0.8.846"
   },
   "description": "Starter boilerplate for React and Redux, using Webpack 2",
   "repository": {

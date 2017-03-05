@@ -1,16 +1,8 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
 import { createStore, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
-import 'babel-polyfill';
-import logger from 'dev/logger';
-
 import rootReducer from 'reducers';
-import Routes from 'routes';
-
-// Load SCSS
-import '../scss/app.scss';
+import logger from 'dev/logger';
+import DevTools from 'dev/redux-dev-tools';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -41,18 +33,10 @@ if (isProduction) {
     enhancer = compose(middleware);
   }
 
-
   store = createStore(
     rootReducer,
     enhancer
   );
 }
 
-
-// Render it to DOM
-ReactDOM.render(
-  <Provider store={ store }>
-    <Routes />
-  </Provider>,
-  document.getElementById('root')
-);
+export default store;

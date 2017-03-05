@@ -1,8 +1,7 @@
 const webpack = require('webpack');
 const path = require('path');
+const fs = require('fs');
 
-const DashboardPlugin = require('webpack-dashboard/plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const autoprefixer = require('autoprefixer');
 
@@ -16,26 +15,12 @@ const sourcePath = path.join(__dirname, './source');
 
 // Common plugins
 const plugins = [
-  new webpack.optimize.CommonsChunkPlugin({
-    name: 'vendor',
-    // filename: 'vendor-[hash].js',
-    filename: 'client/vendor.js',
-    minChunks(module) {
-      const context = module.context;
-      return context && context.indexOf('node_modules') >= 0;
-    },
-  }),
   new webpack.DefinePlugin({
     'process.env': {
       NODE_ENV: JSON.stringify(nodeEnv),
     },
   }),
   new webpack.NamedModulesPlugin(),
-  new HtmlWebpackPlugin({
-    template: path.join(sourcePath, 'index.html'),
-    path: buildPath,
-    filename: 'index.html',
-  }),
   new webpack.LoaderOptionsPlugin({
     options: {
       postcss: [
@@ -63,13 +48,17 @@ const rules = [
   {
     test: /\.(png|gif|jpg|svg)$/,
     include: imgPath,
-    use: 'url-loader?limit=20480&name=assets/[name]-[hash].[ext]',
+    use: 'url-loader?emitFile=false&limit=20480&name=assets/[name]-[hash].[ext]',
   },
 ];
 
 if (isProduction) {
   // Production plugins
   plugins.push(
+    new webpack.LoaderOptionsPlugin({
+      minimize: true,
+      debug: false,
+    }),
     new webpack.optimize.UglifyJsPlugin({
       compress: {
         warnings: false,
@@ -87,7 +76,7 @@ if (isProduction) {
         comments: false,
       },
     }),
-    new ExtractTextPlugin('client/style.css')
+    new ExtractTextPlugin('style-[hash].css')
   );
 
   // Production rules
@@ -95,16 +84,26 @@ if (isProduction) {
     {
       test: /\.scss$/,
       loader: ExtractTextPlugin.extract({
-        fallback: 'style-loader',
-        use: 'css-loader!postcss-loader!sass-loader',
+        fallbackLoader: 'style-loader',
+        loader: 'css-loader!postcss-loader!sass-loader',
       }),
     }
   );
 } else {
   // Development plugins
   plugins.push(
-    new webpack.HotModuleReplacementPlugin(),
-    new DashboardPlugin()
+    new webpack.HotModuleReplacementPlugin()
+  );
+
+  // Production rules
+  rules.push(
+    {
+      test: /\.scss$/,
+      loader: ExtractTextPlugin.extract({
+        fallbackLoader: 'style-loader',
+        loader: 'css-loader!postcss-loader!sass-loader',
+      }),
+    }
   );
 
   // Development rules
@@ -127,16 +126,23 @@ if (isProduction) {
   );
 }
 
-module.exports = {
-  devtool: isProduction ? false : 'source-map',
+// config.entry.index.unshift(
+//   'webpack/hot/poll?1000'
+// );
+const config = {
+  watch: !isProduction,
+  cache: true,
+
+  devtool: isProduction ? 'eval' : 'source-map',
   context: jsSourcePath,
-  entry: {
-    js: './client.js',
-  },
+  entry: [
+    // 'webpack/hot/signal',
+    './server.js',
+  ],
   output: {
     path: buildPath,
     publicPath: '/',
-    filename: 'client/client.js',
+    filename: 'server.js',
   },
   module: {
     rules,
@@ -149,27 +155,18 @@ module.exports = {
     ],
   },
   plugins,
-  devServer: {
-    contentBase: isProduction ? buildPath : sourcePath,
-    historyApiFallback: true,
-    port: 3000,
-    compress: isProduction,
-    inline: !isProduction,
-    hot: !isProduction,
-    host: '0.0.0.0',
-    stats: {
-      assets: true,
-      children: false,
-      chunks: false,
-      hash: false,
-      modules: false,
-      publicPath: false,
-      timings: true,
-      version: false,
-      warnings: true,
-      colors: {
-        green: '\u001b[32m',
-      },
-    },
-  },
+  // Fix for node modules
+  externals: fs.readdirSync('node_modules').reduce((accumulator, module) => {
+    const newAccumulator = accumulator;
+    newAccumulator[module] = `commonjs ${ module }`;
+
+    return newAccumulator;
+  }, {}),
 };
+
+
+// config.entry.index.unshift(
+//   'webpack/hot/poll?1000'
+// );
+
+module.exports = config;
